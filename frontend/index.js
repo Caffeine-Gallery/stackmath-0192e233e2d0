@@ -1,27 +1,52 @@
 import { backend } from 'declarations/backend';
 
-const inputElement = document.getElementById('input');
-const calculateButton = document.getElementById('calculate');
-const clearButton = document.getElementById('clear');
-const resultElement = document.getElementById('result');
-const spinnerElement = document.getElementById('spinner');
+const input = document.getElementById('input');
+const keys = document.querySelectorAll('.key');
 
-calculateButton.addEventListener('click', async () => {
-  const input = inputElement.value.trim();
-  if (input) {
-    try {
-      spinnerElement.classList.remove('d-none');
-      const result = await backend.calculate(input);
-      resultElement.textContent = `Result: ${result}`;
-    } catch (error) {
-      resultElement.textContent = `Error: ${error.message}`;
-    } finally {
-      spinnerElement.classList.add('d-none');
+let currentInput = '';
+
+keys.forEach(key => {
+    key.addEventListener('click', () => handleKeyPress(key.textContent));
+});
+
+async function handleKeyPress(value) {
+    switch(value) {
+        case 'ENTER':
+            try {
+                const result = await backend.calculate(currentInput);
+                input.value = result;
+                currentInput = result;
+            } catch (error) {
+                input.value = 'Error';
+                currentInput = '';
+            }
+            break;
+        case '←':
+            currentInput = currentInput.slice(0, -1);
+            input.value = currentInput;
+            break;
+        case '+/-':
+            if (currentInput.startsWith('-')) {
+                currentInput = currentInput.slice(1);
+            } else {
+                currentInput = '-' + currentInput;
+            }
+            input.value = currentInput;
+            break;
+        case 'R↓':
+            const parts = currentInput.split(' ');
+            if (parts.length > 1) {
+                const last = parts.pop();
+                currentInput = [...parts, parts.pop(), last].join(' ');
+                input.value = currentInput;
+            }
+            break;
+        case 'EEX':
+            currentInput += 'E';
+            input.value = currentInput;
+            break;
+        default:
+            currentInput += value;
+            input.value = currentInput;
     }
-  }
-});
-
-clearButton.addEventListener('click', () => {
-  inputElement.value = '';
-  resultElement.textContent = '';
-});
+}
